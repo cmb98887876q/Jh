@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ITI Pro - Enhanced Dashboard</title>
+    
+    <!-- Modern Font: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+    <style>
+        /* --- 1. THEME VARIABLES --- */
+        :root {
+            --primary: #6366f1;       /* Indigo 500 */
+            --primary-dark: #4f46e5;  /* Indigo 600 */
+            --primary-light: #e0e7ff; /* Indigo 100 */
+            --accent: #f43f5e;        /* Rose 500 */
+            --success: #10b981;       /* Emerald 500 */
+            --warning: #f59e0b;       /* Amber 500 */
+            --dark: #0f172a;          /* Slate 900 */
+            --text-main: #1e293b;     /* Slate 800 */
+            --text-muted: #64748b;    /* Slate 500 */
+            
+            --bg-color: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+            
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            
+            --grad-primary: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
+        
+        body { 
+            margin: 0; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg-color); 
+            color: var(--text-main); 
+            height: 100dvh; 
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- BACKGROUND DECORATION --- */
+        .bg-blobs { position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+        .blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.5; animation: float 10s infinite ease-in-out alternate; }
+        .blob-1 { top: -10%; right: -20%; width: 300px; height: 300px; background: #c7d2fe; }
+        .blob-2 { bottom: -10%; left: -20%; width: 250px; height: 250px; background: #fecdd3; animation-delay: -5s; }
+        
+        @keyframes float { 0% { transform: translate(0, 0); } 100% { transform: translate(30px, 50px); } }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* --- 2. HEADER --- */
+        .app-header {
+            padding: 15px 20px; 
+            background: rgba(255, 255, 255, 0.7); 
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: var(--glass-border);
+            z-index: 50; position: relative; height: 70px;
+        }
+        
+        .header-left { display: flex; align-items: center; gap: 15px; }
+
+        /* NEW BACK BUTTON STYLE */
+        .nav-btn {
+            width: 40px; height: 40px; border-radius: 12px;
+            background: white; border: var(--glass-border);
+            color: var(--text-main); font-size: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: var(--shadow-sm); transition: 0.2s;
+        }
+        .nav-btn:active { transform: scale(0.95); background: #f1f5f9; }
+
+        .brand h1 { 
+            font-size: 1.4rem; font-weight: 800; margin: 0; letter-spacing: -0.5px;
+            background: var(--grad-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+        }
+        .brand p { font-size: 0.75rem; color: var(--text-muted); margin: 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .profile-pill {
+            display: flex; align-items: center; gap: 10px; 
+            background: white; padding: 4px 12px 4px 4px; 
+            border-radius: 50px; cursor: pointer; transition: 0.3s;
+            box-shadow: var(--shadow-sm); border: var(--glass-border);
+        }
+        .profile-pill:active { transform: scale(0.95); }
+        .header-pic { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .header-name { font-size: 0.85rem; font-weight: 700; color: var(--dark); max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* --- 3. DASHBOARD --- */
+        #topicScreen { height: calc(100% - 70px); overflow-y: auto; padding: 25px 20px; }
+        
+        .welcome-box { margin-bottom: 25px; }
+        .welcome-title { font-size: 1.5rem; font-weight: 800; color: var(--dark); margin: 0 0 5px; }
+        .welcome-sub { color: var(--text-muted); font-size: 0.95rem; }
+
+        .topic-grid { display: grid; grid-template-columns: 1fr; gap: 18px; padding-bottom: 40px; }
+        @media (min-width: 600px) { .topic-grid { grid-template-columns: 1fr 1fr; } }
+
+        .topic-card {
+            background: var(--card-bg); padding: 20px; border-radius: 24px;
+            display: flex; align-items: center; gap: 18px;
+            box-shadow: var(--shadow-sm); border: var(--glass-border);
+            transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden;
+        }
+        .topic-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: white; }
+        .topic-card:active { transform: scale(0.98); }
+        .topic-card::before {
+            content: ''; position: absolute; left: 0; bottom: 0; height: 100%; width: 4px;
+            background: var(--grad-primary); opacity: 0; transition: 0.3s;
+        }
+        .topic-card:hover::before { opacity: 1; }
+
+        .icon-box {
+            width: 55px; height: 55px; border-radius: 18px; 
+            background: white; color: var(--primary); 
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);
+        }
+        .topic-content { flex: 1; }
+        .topic-content h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--dark); }
+        .topic-content span { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; display: block; margin-top: 4px; }
+        
+        .play-icon { 
+            width: 30px; height: 30px; border-radius: 50%; background: var(--primary-light); 
+            color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.8rem;
+        }
+
+        /* --- 4. QUIZ UI --- */
+        #quizInterface { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 100; display: none; flex-direction: column; }
+        
+        .quiz-top { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); }
+        .close-btn { background: transparent; border: none; width: 40px; height: 40px; font-size: 1.2rem; color: var(--text-muted); cursor: pointer; border-radius: 50%; transition: 0.2s; }
+        .close-btn:hover { background: #f1f5f9; color: var(--dark); }
+        
+        .timer-pill { 
+            background: #fff1f2; color: var(--accent); padding: 8px 16px; border-radius: 30px; 
+            font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; 
+            box-shadow: 0 2px 8px rgba(244, 63, 94, 0.15);
+        }
+        .timer-anim { animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        .progress-track { height: 6px; background: #e2e8f0; width: 100%; }
+        .progress-bar { height: 100%; background: var(--grad-primary); width: 0%; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 0 4px 4px 0; }
+
+        .quiz-body { flex: 1; overflow-y: auto; padding: 30px 20px; max-width: 800px; margin: 0 auto; width: 100%; }
+        
+        .q-badge { 
+            color: var(--primary); font-size: 0.75rem; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; 
+            background: var(--primary-light); padding: 6px 12px; border-radius: 8px; display: inline-block; margin-bottom: 15px;
+        }
+        .q-text { font-size: 1.35rem; font-weight: 800; line-height: 1.4; color: var(--dark); margin: 0 0 30px; }
+
+        .opt-card {
+            background: white; border: 2px solid transparent; padding: 18px 20px; border-radius: 18px;
+            margin-bottom: 15px; cursor: pointer; display: flex; gap: 15px; align-items: center;
+            transition: 0.2s; position: relative; box-shadow: var(--shadow-sm);
+        }
+        .opt-card:hover { transform: translateY(-2px); border-color: #cbd5e1; }
+        .opt-card:active { transform: scale(0.98); }
+        
+        .opt-key { 
+            width: 32px; height: 32px; border-radius: 10px; background: #f1f5f9; color: var(--text-muted);
+            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; transition: 0.2s;
+        }
+        .opt-val { font-weight: 600; color: var(--text-main); font-size: 1rem; line-height: 1.3; }
+        .opt-status { margin-left: auto; opacity: 0; transform: scale(0.5); transition: 0.3s; font-size: 1.2rem; }
+
+        .opt-card.correct { border-color: var(--success); background: #ecfdf5; }
+        .opt-card.correct .opt-key { background: var(--success); color: white; }
+        .opt-card.correct .opt-status { opacity: 1; transform: scale(1); color: var(--success); }
+
+        .opt-card.wrong { border-color: var(--accent); background: #fff1f2; animation: shake 0.4s; }
+        .opt-card.wrong .opt-key { background: var(--accent); color: white; }
+        .opt-card.wrong .opt-status { opacity: 1; transform: scale(1); color: var(--accent); }
+        
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+        .quiz-bottom { padding: 20px; border-top: 1px solid #e2e8f0; background: rgba(255,255,255,0.9); backdrop-filter: blur(5px); }
+        .btn-main {
+            width: 100%; padding: 16px; border-radius: 16px; border: none; font-size: 1rem; font-weight: 700;
+            cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;
+            background: #e2e8f0; color: var(--text-muted);
+        }
+        .btn-main.active { background: var(--dark); color: white; box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.3); }
+
+        /* --- 5. RESULT UI --- */
+        #resultView { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 150; overflow-y: auto; }
+        .result-container { padding: 20px; max-width: 500px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; }
+        #captureArea {
+            background: white; border-radius: 30px; overflow: hidden; position: relative;
+            box-shadow: var(--shadow-lg); text-align: center; padding-bottom: 30px; margin-top: 20px; border: 4px solid white;
+        }
+        .res-header { height: 130px; background: var(--grad-primary); position: relative; display: flex; justify-content: center; }
+        .trophy-icon { font-size: 4rem; color: rgba(255,255,255,0.2); margin-top: 20px; }
+        .res-pic-box { width: 100px; height: 100px; margin: -50px auto 15px; position: relative; z-index: 2; }
+        .res-pic { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 5px solid white; background: white; }
+        .res-name { font-size: 1.5rem; font-weight: 800; color: var(--dark); margin: 0; }
+        .res-sub { color: var(--text-muted); font-size: 0.9rem; font-weight: 600; margin-top: 5px; }
+
+        .score-row { display: flex; gap: 15px; margin: 25px 30px; justify-content: center; }
+        .score-card { flex: 1; background: #f8fafc; padding: 15px; border-radius: 16px; border: 1px solid #e2e8f0; }
+        .score-val { font-size: 1.8rem; font-weight: 800; display: block; line-height: 1; }
+        .score-lbl { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-top: 6px; display: block; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 30px; }
+        .stat-item { padding: 12px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .stat-item.good { background: #ecfdf5; color: var(--success); border: 1px solid #d1fae5; }
+        .stat-item.bad { background: #fff1f2; color: var(--accent); border: 1px solid #ffe4e6; }
+
+        .action-btns { padding: 20px 0; display: flex; gap: 15px; margin-top: auto; }
+        .btn-outline { flex: 1; padding: 16px; border: 2px solid #e2e8f0; background: white; border-radius: 16px; font-weight: 700; color: var(--dark); cursor: pointer; }
+        .btn-fill { flex: 1; padding: 16px; background: var(--dark); border: none; border-radius: 16px; font-weight: 700; color: white; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-outline:active, .btn-fill:active { transform: scale(0.96); }
+
+        .fade-in-up { animation: fadeInUp 0.5s ease backwards; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <!-- 1. TOPIC SCREEN -->
+    <div id="topicScreen">
+        <header class="app-header">
+            <!-- Back Button & Brand -->
+            <div class="header-left">
+                <button class="nav-btn" onclick="window.location.href='login.html'">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <div class="brand">
+                    <h1>ITI Pro</h1>
+                    <p>Mock Series</p>
+                </div>
+            </div>
+            
+            <!-- Profile -->
+            <div class="profile-pill" onclick="location.href='login.html'">
+                <img id="headPic" class="header-pic" src="">
+                <span id="headName" class="header-name">Student</span>
+            </div>
+        </header>
+
+        <div style="padding-top: 20px;">
+            <div class="welcome-box fade-in-up">
+                <h2 class="welcome-title">Let's Study</h2>
+                <div class="welcome-sub">Select a topic to start practicing</div>
+            </div>
+            <div class="topic-grid" id="topicGrid"></div>
+        </div>
+    </div>
+
+    <!-- 2. QUIZ INTERFACE -->
+    <div id="quizInterface">
+        <div class="quiz-top">
+            <button class="close-btn" onclick="confirmExit()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="timer-pill" id="timerContainer"><i class="fa-regular fa-clock"></i> <span id="timerText">60s</span></div>
+        </div>
+        <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+        
+        <div class="quiz-body">
+            <span class="q-badge">Question <span id="qIndex">1</span></span>
+            <div class="q-text" id="qText">Loading Question...</div>
+            <div id="optionsList"></div>
+        </div>
+
+        <div class="quiz-bottom">
+            <button id="nextBtn" class="btn-main" onclick="nextQuestion()">Skip <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- 3. RESULT INTERFACE -->
+    <div id="resultView">
+        <div class="result-container">
+            <div id="captureArea">
+                <div class="res-header">
+                    <i class="fa-solid fa-trophy trophy-icon"></i>
+                </div>
+                <div class="res-pic-box">
+                    <img id="resPic" class="res-pic" src="">
+                </div>
+                <h2 id="resName" class="res-name">Student Name</h2>
+                <div class="res-sub">Performance Report</div>
+
+                <div class="score-row">
+                    <div class="score-card">
+                        <span class="score-val" style="color:var(--primary)" id="resScore">0%</span>
+                        <span class="score-lbl">Accuracy</span>
+                    </div>
+                    <div class="score-card">
+                        <span class="score-val" style="color:var(--dark)" id="resTotal">0</span>
+                        <span class="score-lbl">Questions</span>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-item good">
+                        <i class="fa-solid fa-check-circle"></i> <span id="resRight">0</span> Correct
+                    </div>
+                    <div class="stat-item bad">
+                        <i class="fa-solid fa-circle-xmark"></i> <span id="resWrong">0</span> Wrong
+                    </div>
+                </div>
+                <div style="margin-top:25px; font-size:0.65rem; color:#cbd5e1; font-weight:700; letter-spacing:2px;">ITI PRO CERTIFIED</div>
+            </div>
+
+            <div class="action-btns">
+                <button class="btn-outline" onclick="location.reload()"><i class="fa-solid fa-house"></i> Home</button>
+                <button class="btn-fill" onclick="shareResult()"><i class="fa-solid fa-share-nodes"></i> Share Result</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- PROFILE SETUP ---
+        const name = localStorage.getItem('iti_student_name') || "Alex Smith";
+        const pic = localStorage.getItem('iti_student_pic') || "https://ui-avatars.com/api/?name=Alex+Smith&background=6366f1&color=fff";
+        
+        window.onload = () => {
+            document.getElementById('headName').innerText = name;
+            document.getElementById('headPic').src = pic;
+            document.getElementById('resName').innerText = name;
+            document.getElementById('resPic').src = pic;
+            renderTopics();
+        };
+
+        // --- DATA & LOGIC ---
+        const defaultTopics = [ 
+            { id: "safety", name: "Safety Practices", icon: "fa-helmet-safety" }, 
+            { id: "tools", name: "Hand Tools", icon: "fa-screwdriver-wrench" },
+            { id: "circuits", name: "AC Circuits", icon: "fa-wave-square" },
+            { id: "magnet", name: "Magnetism", icon: "fa-magnet" },
+            { id: "measure", name: "Measurements", icon: "fa-ruler-combined" },
+            { id: "motor", name: "DC Motors", icon: "fa-fan" }
+        ];
+
+        let topics = JSON.parse(localStorage.getItem('iti_topics')) || defaultTopics;
+        let qBank = JSON.parse(localStorage.getItem('iti_qbank')) || {
+            "safety": [
+                {t:"What is the color code of a CO2 Fire Extinguisher?", o:["Blue Band","Black Band","Red Band", "Yellow Band"], a:1},
+                {t:"Which type of fire extinguisher is used for electrical fires?", o:["Foam","Water","Halon / CO2", "Soda Acid"], a:2}
+            ],
+            "tools": [
+                {t:"What is the material used for Screwdriver blades?", o:["Cast Iron","Mild Steel","Hardened Carbon Steel", "Copper"], a:2}
+            ]
+        };
+
+        let activeQs=[], curr=0, score=0, timer;
+
+        function renderTopics() {
+            const grid = document.getElementById('topicGrid');
+            grid.innerHTML = ''; 
+            topics.forEach((t, i) => {
+                let count = qBank[t.id] ? qBank[t.id].length : 0;
+                grid.innerHTML += `
+                <div class="topic-card fade-in-up" style="animation-delay: ${i*0.05}s" onclick="startQuiz('${t.id}')">
+                    <div class="icon-box"><i class="fa-solid ${t.icon}"></i></div>
+                    <div class="topic-content"><h3>${t.name}</h3><span>${count} Questions</span></div>
+                    <div class="play-icon"><i class="fa-solid fa-play"></i></div>
+                </div>`;
+            });
+        }
+
+        function startQuiz(id) {
+            qBank = JSON.parse(localStorage.getItem('iti_qbank')) || qBank;
+            
+            if(qBank[id] && qBank[id].length > 0) {
+                activeQs = qBank[id]; curr = 0; score = 0;
+                document.getElementById('topicScreen').style.display = 'none';
+                document.getElementById('quizInterface').style.display = 'flex';
+                loadQ();
+            } else alert("No questions available for this topic.");
+        }
+
+        function loadQ() {
+            clearInterval(timer);
+            let time = 60; 
+            document.getElementById('timerText').innerText = "60s";
+            document.getElementById('timerContainer').classList.remove('timer-anim');
+            
+            const q = activeQs[curr];
+            document.getElementById('qIndex').innerText = `${curr + 1} / ${activeQs.length}`;
+            document.getElementById('qText').innerText = q.t;
+            document.getElementById('progressBar').style.width = `${((curr)/activeQs.length)*100}%`;
+
+            const list = document.getElementById('optionsList'); list.innerHTML = '';
+            
+            const btn = document.getElementById('nextBtn');
+            btn.innerHTML = 'Skip <i class="fa-solid fa-arrow-right"></i>';
+            btn.className = "btn-main";
+            btn.onclick = nextQuestion;
+
+            q.o.forEach((opt, i) => {
+                list.innerHTML += `
+                <div class="opt-card fade-in-up" style="animation-delay: ${i*0.05}s" onclick="checkAnswer(${i}, this)">
+                    <div class="opt-key">${String.fromCharCode(65+i)}</div>
+                    <div class="opt-val">${opt}</div>
+                    <i class="fa-solid fa-check-circle opt-status"></i>
+                </div>`;
+            });
+
+            timer = setInterval(() => {
+                time--; document.getElementById('timerText').innerText = time + "s";
+                if(time < 10) document.getElementById('timerContainer').classList.add('timer-anim');
+                if(time <= 0) nextQuestion();
+            }, 1000);
+        }
+
+        function checkAnswer(idx, el) {
+            if(document.querySelector('.opt-card.correct') || document.querySelector('.opt-card.wrong')) return; 
+            clearInterval(timer);
+            
+            const correct = activeQs[curr].a;
+            if(idx === correct) {
+                el.classList.add('correct'); score++;
+                confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 } });
+            } else {
+                el.classList.add('wrong');
+                el.querySelector('.opt-status').classList.replace('fa-check-circle', 'fa-circle-xmark');
+                document.querySelectorAll('.opt-card')[correct].classList.add('correct');
+            }
+
+            const btn = document.getElementById('nextBtn');
+            btn.className = "btn-main active";
+            btn.innerHTML = (curr === activeQs.length - 1) ? 'See Result' : 'Next Question';
+        }
+
+        function nextQuestion() {
+            if(curr < activeQs.length - 1) { curr++; loadQ(); } 
+            else { document.getElementById('progressBar').style.width = '100%'; setTimeout(showResult, 300); }
+        }
+
+        function showResult() {
+            document.getElementById('quizInterface').style.display = 'none';
+            document.getElementById('resultView').style.display = 'block';
+
+            let finalScore = Math.round((score/activeQs.length)*100);
+            let tempScore = 0;
+            let scoreInterval = setInterval(() => {
+                if(tempScore >= finalScore) clearInterval(scoreInterval);
+                else tempScore++;
+                document.getElementById('resScore').innerText = tempScore + "%";
+            }, 20);
+
+            document.getElementById('resTotal').innerText = activeQs.length;
+            document.getElementById('resRight').innerText = score;
+            document.getElementById('resWrong').innerText = activeQs.length - score;
+
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 200 };
+            
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random()*0.2+0.1, y: Math.random()-0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random()*0.2+0.7, y: Math.random()-0.2 } }));
+            }, 250);
+        }
+
+        function shareResult() {
+            const btn = document.querySelector('.btn-fill');
+            const oldHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+            
+            html2canvas(document.getElementById('captureArea'), { scale: 2, useCORS: true }).then(canvas => {
+                canvas.toBlob(blob => {
+                    const file = new File([blob], "result.png", { type: "image/png" });
+                    if(navigator.share) {
+                        navigator.share({ title: 'My ITI Score', text: `I scored ${score}/${activeQs.length} in ITI Pro!`, files: [file] })
+                        .catch(e => console.log('Sharing failed', e));
+                    } else {
+                        const a = document.createElement('a'); a.href = canvas.toDataURL(); a.download = "iti_result.png"; a.click();
+                    }
+                    btn.innerHTML = oldHtml;
+                });
+            });
+        }
+
+        function confirmExit() { if(confirm("Quit current exam?")) location.reload(); }
+    </script>
+</body>
+</html>
